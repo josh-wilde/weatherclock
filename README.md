@@ -20,7 +20,7 @@ Raspberry Pi WeatherClock
 
 ## Using matplotlib for the image display
 
-- [This snippet](https://gist.githubusercontent.com/Kopfgeldjaeger/45b4cb02c48921a8ab238754c1034647/raw/a48c20a27f0ed7bc29be8c5c65240272df545745/dynamic_clock) uses matplotlib to display a clock with an animation.
+- [This snippet](https://gist.githubusercontent.com/Kopfgeldjaeger/45b4cb02c48921a8ab238754c1034647/raw/a48c20a27f0ed7bc29be8c5c65240272df545745/dynamic_clock) uses matplotlib to display a clock with an animation. Don't actually use this for the animation part though - see Qt tutorial below.
 - Looks like it is possible to replace the axis ticks with images, see an example [here](https://stackoverflow.com/questions/69538086/how-to-use-images-as-xtick-labels-in-seaborn-matplotlib-barplot) and [here](https://stackoverflow.com/questions/44246650/add-image-annotations-to-bar-plots).
 
 ## Design
@@ -29,9 +29,10 @@ Maybe the clock with icons and temps/precip on the left, and on the right, big b
 
 ## Code design
 
-The main loop needs to `plt.show()` a single `FunctionAnimation` object (`animation`).
-The figure input into `animation` is the full display figure, with 3 subplots.
-The update function should be a driver of multiple updates for all three subplots.
+Qt for the graphical output is a good idea, multiplatform.
+[This tutorial](https://www.pythonguis.com/tutorials/plotting-matplotlib/) shows how to use Qt to create a dynamic plot.
+Also, [this example](https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_qt_sgskip.html#sphx-glr-gallery-user-interfaces-embedding-in-qt-sgskip-py) does something similar.
+This works on mac at least.
 
 Not sure about wrappers for the subplots yet.
 Might be helpful to take in relevant parameters and construct the `matplotlib` object that goes into the figure.

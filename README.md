@@ -26,3 +26,24 @@ Raspberry Pi WeatherClock
 ## Design
 
 Maybe the clock with icons and temps/precip on the left, and on the right, big bold date and the `detailedForecast` readout from the [forecast](https://api.weather.gov/gridpoints/BOX/64,86/forecast) below that.
+
+## Code design
+
+The main loop needs to `plt.show()` a single `FunctionAnimation` object (`animation`).
+The figure input into `animation` is the full display figure, with 3 subplots.
+The update function should be a driver of multiple updates for all three subplots.
+
+Not sure about wrappers for the subplots yet.
+Might be helpful to take in relevant parameters and construct the `matplotlib` object that goes into the figure.
+Will need to figure out if this will work with variable scope.
+
+- Entire display is a `Display` that holds a `matplotlib` object with three subplots - left, top right, bottom right.
+  - The right two subplots are `TextBox` objects.
+  - The left subplot is a `WeatherClock` object.
+- `Display`
+  - Wraps a `matplotlib` figure with set number of subplots and sizes for these subplots.
+- `TextBox`
+  - Input text and `matplotlib` parameters and get a text subplot.
+  - Maybe a `Date` object inherits from this and has an update function to generate the text.
+- `WeatherClock`
+  - A single `matplotlib` subplot that is an animated clock and

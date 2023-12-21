@@ -1,6 +1,5 @@
 # venv
 env/
-env_inky/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

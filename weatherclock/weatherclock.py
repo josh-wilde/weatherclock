@@ -1,5 +1,4 @@
 import sys
-import random
 import matplotlib
 import numpy as np
 from numpy import pi

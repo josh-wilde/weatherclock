@@ -38,7 +38,8 @@ class DateTime:
         self._update_strings()
 
     def _update_strings(self):
-        self.hour_str: str = f"{self.hour}"
+        twelve_hour: int = self.hour % 12 if self.hour % 12 != 0 else 12
+        self.hour_str: str = f"{twelve_hour}"
         self.minute_str: str = f"{self.minute:02}"
         self.second_str: str = f"{self.second:02}"
 
@@ -51,8 +52,8 @@ class DateTime:
 
 
 class MplCanvas(FigureCanvas):
-    def __init__(self, parent=None, width=8, height=4.8, dpi=100):
-        fig: Figure = Figure(figsize=(width, height), dpi=dpi, layout="constrained")
+    def __init__(self, width=8, height=4.8, dpi=100, **kwargs):
+        fig: Figure = Figure(figsize=(width, height), dpi=dpi, **kwargs)
         gs: GridSpec = GridSpec(2, 2, width_ratios=[1.5, 1], figure=fig)
         self.axes: dict[str, Axes] = {
             "weatherclock": fig.add_subplot(gs[:, 0], polar=True),
@@ -66,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.canvas = MplCanvas()
+        self.canvas = MplCanvas(layout="constrained", facecolor="lightgray")
         self.setCentralWidget(self.canvas)
 
         # Store references to the plot elements that will be updated
@@ -117,6 +118,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # TODO: these will need to come from the weather API, so will move into the update function
         ax.set_xticklabels(range(1, 13))
+
+        # ax.set_facecolor("lightgray")
         ax.set_theta_direction(-1)
         ax.set_theta_offset(pi / 3.0)
         ax.grid(False)
@@ -197,7 +200,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_forecast(self):
         # TODO: this will be updated with a call to the weather object
-        forecast_str: str = f"Short description of the day's forecast at {self.now.hour_str}:{self.now.hour_str}."
+        forecast_str: str = f"Short description of the day's forecast at {self.now.hour_str}:{self.now.minute_str}."
 
         if self._forecast_text_ref is None:
             self._forecast_text_ref = self.canvas.axes["forecast"].text(

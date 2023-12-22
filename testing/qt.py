@@ -1,49 +1,63 @@
 import sys
-import time
+import random
+import matplotlib
 
-import numpy as np
+matplotlib.use("Qt5Agg")
 
-from matplotlib.backends.backend_qtagg import FigureCanvas
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.backends.qt_compat import QtWidgets
+from PyQt5 import QtCore, QtWidgets
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 
-class ApplicationWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self._main = QtWidgets.QWidget()
-        self.setCentralWidget(self._main)
-        layout = QtWidgets.QVBoxLayout(self._main)
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
 
-        static_canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        # Ideally one would use self.addToolBar here, but it is slightly
-        # incompatible between PyQt6 and other bindings, so we just add the
-        # toolbar as a plain widget instead.
-        layout.addWidget(NavigationToolbar(static_canvas, self))
-        layout.addWidget(static_canvas)
 
-        dynamic_canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        layout.addWidget(dynamic_canvas)
-        layout.addWidget(NavigationToolbar(dynamic_canvas, self))
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
 
-        self._static_ax = static_canvas.figure.subplots()
-        t = np.linspace(0, 10, 501)
-        self._static_ax.plot(t, np.tan(t), ".")
+        self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
+        self.setCentralWidget(self.canvas)
 
-        self._dynamic_ax = dynamic_canvas.figure.subplots()
-        t = np.linspace(0, 10, 101)
-        # Set up a Line2D.
-        (self._line,) = self._dynamic_ax.plot(t, np.sin(t + time.time()))
-        self._timer = dynamic_canvas.new_timer(50)
-        self._timer.add_callback(self._update_canvas)
-        self._timer.start()
+        n_data = 50
+        self.xdata = list(range(n_data))
+        self.ydata = [random.randint(0, 10) for i in range(n_data)]
 
-    def _update_canvas(self):
-        t = np.linspace(0, 10, 101)
-        # Shift the sinusoid as a function of time.
-        self._line.set_data(t, np.sin(t + time.time()))
-        self._line.figure.canvas.draw()
+        # We need to store a reference to the plotted line
+        # somewhere, so we can apply the new data to it.
+        self._plot_ref = None
+        self.update_plot()
+
+        self.showFullScreen()
+
+        # Setup a timer to trigger the redraw by calling update_plot.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.update_plot)
+        self.timer.start()
+
+    def update_plot(self):
+        # Drop off the first y element, append a new one.
+        self.ydata = self.ydata[1:] + [random.randint(0, 10)]
+
+        # Note: we no longer need to clear the axis.
+        if self._plot_ref is None:
+            # First time we have no plot reference, so do a normal plot.
+            # .plot returns a list of line <reference>s, as we're
+            # only getting one we can take the first element.
+            plot_refs = self.canvas.axes.plot(self.xdata, self.ydata, "r")
+            self._plot_ref = plot_refs[0]
+        else:
+            # We have a reference, we can use it to update the data for that line.
+            self._plot_ref.set_ydata(self.ydata)
+
+        # Trigger the canvas to update and redraw.
+        self.canvas.draw()
 
 
 if __name__ == "__main__":
@@ -53,8 +67,5 @@ if __name__ == "__main__":
     if not qapp:
         qapp = QtWidgets.QApplication(sys.argv)
 
-    app = ApplicationWindow()
-    app.show()
-    app.activateWindow()
-    app.raise_()
+    w = MainWindow()
     qapp.exec()

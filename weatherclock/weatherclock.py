@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 import matplotlib
 import numpy as np
 from numpy import pi
@@ -15,30 +16,38 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
 
-MONTH_NAMES: dict[int, str] = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December",
-}
+from constants import MONTH_NAMES, WEEKDAY_NAMES
 
-WEEKDAY_NAMES: dict[int, str] = {
-    0: "Monday",
-    1: "Tuesday",
-    2: "Wednesday",
-    3: "Thursday",
-    4: "Friday",
-    5: "Saturday",
-    6: "Sunday",
-}
+
+class DateTime:
+    def __init__(self, dt: datetime):
+        self.update(dt)
+
+    def update(self, dt: datetime):
+        # Times
+        self.hour: int = dt.hour
+        self.minute: int = dt.minute
+        self.second: int = dt.second
+
+        # Dates
+        self.month: int = dt.month
+        self.day: int = dt.day
+        self.weekday: int = dt.weekday()
+
+        # Convert to string representations
+        self._update_strings()
+
+    def _update_strings(self):
+        self.hour_str: str = f"{self.hour}"
+        self.minute_str: str = f"{self.minute:02}"
+        self.second_str: str = f"{self.second:02}"
+
+        self.month_str: str = MONTH_NAMES[self.month]
+        self.day_str: str = f"{self.day}"
+        self.weekday_str: str = WEEKDAY_NAMES[self.weekday]
+
+    def __repr__(self):
+        return f"{self.weekday_str} {self.month_str} {self.day_str} {self.hour_str}:{self.minute_str}:{self.second_str}"
 
 
 class MplCanvas(FigureCanvas):
@@ -60,36 +69,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.canvas = MplCanvas()
         self.setCentralWidget(self.canvas)
 
-        # We need to store a reference to the plotted line
-        # somewhere, so we can apply the new data to it.
+        # Store references to the plot elements that will be updated
         self._clock_hand_plot_refs: dict[str, Line2D] | None = None
         self._date_text_refs: dict[str, Text] | None = None
         self._forecast_text_ref: Text | None = None
 
-        # Setup the clock
-        self.canvas.axes["weatherclock"].set_xticks(
-            np.linspace(0, 2 * pi, 12, endpoint=False)
-        )
-        self.canvas.axes["weatherclock"].set_xticklabels(range(1, 13))
-        self.canvas.axes["weatherclock"].set_theta_direction(-1)
-        self.canvas.axes["weatherclock"].set_theta_offset(pi / 3.0)
-        self.canvas.axes["weatherclock"].grid(False)
-        self.canvas.axes["weatherclock"].set_ylim(0, 1)
-        self.canvas.axes["weatherclock"].set_yticklabels([])
+        # Create a datetime object to store the current time
+        self.now: DateTime = DateTime(datetime.now())
 
-        # Set up the date
-        self.canvas.axes["date"].axis("off")
-        self.canvas.axes["date"].set_xticks([])
-        self.canvas.axes["date"].set_yticks([])
-        self.canvas.axes["date"].set_xlim(0, 10)
-        self.canvas.axes["date"].set_ylim(0, 10)
+        # TODO: Create a weather object to store the current weather information
 
-        # Set up the forecast
-        self.canvas.axes["forecast"].axis("off")
-        self.canvas.axes["forecast"].set_xticks([])
-        self.canvas.axes["forecast"].set_yticks([])
-        self.canvas.axes["forecast"].set_xlim(0, 10)
-        self.canvas.axes["forecast"].set_ylim(0, 10)
+        # Set the elements of the Axes objects that won't change
+        self.initialize_axes()
 
         self.update_plot()
         self.canvas.draw()
@@ -103,86 +94,116 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.update_plot)
         self.timer.start()
 
-    def update_plot(self):
-        weatherclock: Axes = self.canvas.axes["weatherclock"]
-        now: datetime = datetime.now()
-        hour: int = now.hour
-        minute: int = now.minute
-        second: int = now.second
-        month_name: str = MONTH_NAMES[now.month]
-        day: int = now.day
-        day_of_week: str = WEEKDAY_NAMES[now.weekday()]
+    def initialize_axes(self):
+        # Set up the weather clock
+        self.initialize_weatherclock()
 
-        angles_h = (
-            2 * pi * hour / 12
-            + 2 * pi * minute / (12 * 60)
-            + 2 * second / (12 * 60 * 60)
-            - pi / 6.0
-        )
-        angles_m = 2 * pi * minute / 60 + 2 * pi * second / (60 * 60) - pi / 6.0
-        angles_s = 2 * pi * second / 60 - pi / 6.0
+        # Set up the date and the forecast
+        for axes_name in ["date", "forecast"]:
+            self.initialize_text_subplot(axes_name)
+
+    def initialize_text_subplot(self, axes_name: str):
+        ax: Axes = self.canvas.axes[axes_name]
+
+        ax.axis("off")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xlim(0, 10)
+        ax.set_ylim(0, 10)
+
+    def initialize_weatherclock(self):
+        ax: Axes = self.canvas.axes["weatherclock"]
+        ax.set_xticks(np.linspace(0, 2 * pi, 12, endpoint=False))
+
+        # TODO: these will need to come from the weather API, so will move into the update function
+        ax.set_xticklabels(range(1, 13))
+        ax.set_theta_direction(-1)
+        ax.set_theta_offset(pi / 3.0)
+        ax.grid(False)
+        ax.set_ylim(0, 1)
+        ax.set_yticklabels([])
+
+    def update_weatherclock(self):
+        weatherclock: Axes = self.canvas.axes["weatherclock"]
+
+        angles: dict[str, float] = {
+            "hour": (
+                2 * pi * self.now.hour / 12
+                + 2 * pi * self.now.minute / (12 * 60)
+                + 2 * self.now.second / (12 * 60 * 60)
+                - pi / 6.0
+            ),
+            "minute": (
+                2 * pi * self.now.minute / 60
+                + 2 * pi * self.now.second / (60 * 60)
+                - pi / 6.0
+            ),
+            "second": 2 * pi * self.now.second / 60 - pi / 6.0,
+        }
 
         if self._clock_hand_plot_refs is None:
-            s_plot_refs: list[Line2D] = weatherclock.plot(
-                [angles_s, angles_s],
-                [0, 0.95],
-                color="red",
-                linewidth=1,
-                solid_capstyle="round",
-            )
-            m_plot_refs: list[Line2D] = weatherclock.plot(
-                [angles_m, angles_m],
-                [0, 0.8],
-                color="black",
-                linewidth=2,
-                solid_capstyle="round",
-            )
-            h_plot_refs: list[Line2D] = weatherclock.plot(
-                [angles_h, angles_h],
-                [0, 0.5],
-                color="black",
-                linewidth=4,
-                solid_capstyle="round",
-            )
-
+            shared_kwargs: dict[str, Any] = {"solid_capstyle": "round"}
             self._clock_hand_plot_refs = {
-                "second": s_plot_refs[0],
-                "minute": m_plot_refs[0],
-                "hour": h_plot_refs[0],
+                "second": weatherclock.plot(
+                    [angles["second"], angles["second"]],
+                    [0, 0.95],
+                    color="red",
+                    linewidth=1,
+                    **shared_kwargs,
+                )[0],
+                "minute": weatherclock.plot(
+                    [angles["minute"], angles["minute"]],
+                    [0, 0.8],
+                    color="black",
+                    linewidth=2,
+                    **shared_kwargs,
+                )[0],
+                "hour": weatherclock.plot(
+                    [angles["hour"], angles["hour"]],
+                    [0, 0.5],
+                    color="black",
+                    linewidth=4,
+                    **shared_kwargs,
+                )[0],
             }
         else:
-            self._clock_hand_plot_refs["second"].set_xdata([angles_s, angles_s])
-            self._clock_hand_plot_refs["minute"].set_xdata([angles_m, angles_m])
-            self._clock_hand_plot_refs["hour"].set_xdata([angles_h, angles_h])
+            for hand, plot_ref in self._clock_hand_plot_refs.items():
+                plot_ref.set_xdata([angles[hand], angles[hand]])
+
+    def update_date(self):
+        date_ax: Axes = self.canvas.axes["date"]
+        month_day_str: str = f"{self.now.month_str} {self.now.day_str}"
 
         if self._date_text_refs is None:
+            shared_kwargs: dict[str, Any] = {
+                "horizontalalignment": "center",
+                "verticalalignment": "center",
+            }
             self._date_text_refs = {
-                "month_day": self.canvas.axes["date"].text(
+                "month_day": date_ax.text(
                     5,
                     6.5,
-                    f"{month_name} {day}",
-                    horizontalalignment="center",
-                    verticalalignment="center",
+                    f"{self.now.month_str} {self.now.day_str}",
                     fontsize=32,
+                    **shared_kwargs,
                 ),
-                "day_of_week": self.canvas.axes["date"].text(
-                    5,
-                    4,
-                    day_of_week,
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    fontsize=24,
+                "week_day": date_ax.text(
+                    5, 4, self.now.weekday_str, fontsize=24, **shared_kwargs
                 ),
             }
         else:
-            self._date_text_refs["month_day"].set_text(f"{month_name} {day}")
-            self._date_text_refs["day_of_week"].set_text(day_of_week)
+            self._date_text_refs["month_day"].set_text(month_day_str)
+            self._date_text_refs["week_day"].set_text(self.now.weekday_str)
+
+    def update_forecast(self):
+        # TODO: this will be updated with a call to the weather object
+        forecast_str: str = f"Short description of the day's forecast at {self.now.hour_str}:{self.now.hour_str}."
 
         if self._forecast_text_ref is None:
             self._forecast_text_ref = self.canvas.axes["forecast"].text(
                 5,
                 7,
-                f"Short description of the day's forecast at {hour}:{minute:02}.",
+                forecast_str,
                 horizontalalignment="center",
                 verticalalignment="center",
                 fontsize=12,
@@ -190,9 +211,22 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             self._forecast_text_ref._get_wrap_line_width = lambda: 300
         else:
-            self._forecast_text_ref.set_text(
-                f"Short description of the day's forecast at {hour}:{minute:02}."
-            )
+            self._forecast_text_ref.set_text(forecast_str)
+
+    def update_plot(self):
+        # Get the current time and date
+        self.now.update(datetime.now())
+        # TODO: Get the current hourly weather information
+        # TODO: get the current forecast information
+
+        # Update the weatherclock axes
+        self.update_weatherclock()
+
+        # Update the date axes
+        self.update_date()
+
+        # Update the forecast axes
+        self.update_forecast()
 
         # Trigger the canvas to update and redraw.
         self.canvas.draw()

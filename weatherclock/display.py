@@ -53,6 +53,8 @@ class DateTime:
 
 class MplCanvas(FigureCanvas):
     def __init__(self, width=8, height=4.8, dpi=100, **kwargs):
+        # Set up figure and add axes
+        # TODO: kwargs needs to hold figure and axes kwargs, so these need to be parsed
         fig: Figure = Figure(figsize=(width, height), dpi=dpi, **kwargs)
         gs: GridSpec = GridSpec(2, 2, width_ratios=[1.5, 1], figure=fig)
         self.axes: dict[str, Axes] = {
@@ -60,40 +62,11 @@ class MplCanvas(FigureCanvas):
             "date": fig.add_subplot(gs[0, 1]),
             "forecast": fig.add_subplot(gs[1, 1]),
         }
-        super(MplCanvas, self).__init__(fig)
 
-
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, *args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
-
-        self.canvas = MplCanvas(layout="constrained", facecolor="lightgray")
-        self.setCentralWidget(self.canvas)
-
-        # Store references to the plot elements that will be updated
-        self._clock_hand_plot_refs: dict[str, Line2D] | None = None
-        self._date_text_refs: dict[str, Text] | None = None
-        self._forecast_text_ref: Text | None = None
-
-        # Create a datetime object to store the current time
-        self.now: DateTime = DateTime(datetime.now())
-
-        # TODO: Create a weather object to store the current weather information
-
-        # Set the elements of the Axes objects that won't change
+        # Initialize the components of the axes that won't change
         self.initialize_axes()
 
-        self.update_plot()
-        self.canvas.draw()
-
-        # self.showFullScreen()
-        self.show()
-
-        # Setup a timer to trigger the redraw by calling update_plot.
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(100)
-        self.timer.timeout.connect(self.update_plot)
-        self.timer.start()
+        super(MplCanvas, self).__init__(fig)
 
     def initialize_axes(self):
         # Set up the weather clock
@@ -104,7 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.initialize_text_subplot(axes_name)
 
     def initialize_text_subplot(self, axes_name: str):
-        ax: Axes = self.canvas.axes[axes_name]
+        ax: Axes = self.axes[axes_name]
 
         ax.axis("off")
         ax.set_xticks([])
@@ -113,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ax.set_ylim(0, 10)
 
     def initialize_weatherclock(self):
-        ax: Axes = self.canvas.axes["weatherclock"]
+        ax: Axes = self.axes["weatherclock"]
         ax.set_xticks(np.linspace(0, 2 * pi, 12, endpoint=False))
 
         # TODO: these will need to come from the weather API, so will move into the update function
@@ -127,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ax.set_yticklabels([])
 
     def update_weatherclock(self):
-        weatherclock: Axes = self.canvas.axes["weatherclock"]
+        weatherclock: Axes = self.axes["weatherclock"]
 
         angles: dict[str, float] = {
             "hour": (
@@ -215,6 +188,39 @@ class MainWindow(QtWidgets.QMainWindow):
             self._forecast_text_ref._get_wrap_line_width = lambda: 300
         else:
             self._forecast_text_ref.set_text(forecast_str)
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+
+        self.canvas = MplCanvas(layout="constrained", facecolor="lightgray")
+        self.setCentralWidget(self.canvas)
+
+        # Store references to the plot elements that will be updated
+        self._clock_hand_plot_refs: dict[str, Line2D] | None = None
+        self._date_text_refs: dict[str, Text] | None = None
+        self._forecast_text_ref: Text | None = None
+
+        # Create a datetime object to store the current time
+        self.now: DateTime = DateTime(datetime.now())
+
+        # TODO: Create a weather object to store the current weather information
+
+        # Set the elements of the Axes objects that won't change
+        self.initialize_axes()
+
+        self.update_plot()
+        self.canvas.draw()
+
+        # self.showFullScreen()
+        self.show()
+
+        # Setup a timer to trigger the redraw by calling update_plot.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.update_plot)
+        self.timer.start()
 
     def update_plot(self):
         # Get the current time and date

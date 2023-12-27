@@ -1,5 +1,4 @@
 from typing import Any
-from datetime import datetime
 import numpy as np
 from numpy import pi
 from matplotlib.axes import Axes
@@ -7,10 +6,11 @@ from matplotlib.lines import Line2D
 
 from weatherclock.utils.clock import get_hour_angle, get_minute_angle, get_second_angle
 from weatherclock.settings.weatherclock import AXES_SETTINGS, PLOT_SETTINGS, YVALS
+from weatherclock.date_time.date_time import DateTime
 
 
 class WeatherClock:
-    def __init__(self, axes: Axes, dt: datetime) -> None:
+    def __init__(self, axes: Axes, dt: DateTime | None = None) -> None:
         self.axes: Axes = axes
 
         # Initialize the clock axes
@@ -20,7 +20,8 @@ class WeatherClock:
         self._plot_refs: dict[str, Line2D] | None = None
 
         # Update the clock
-        self.update(dt)
+        if dt is not None:
+            self.update(dt)
 
     def _initialize_axes(self) -> None:
         # This stuff should not change
@@ -38,8 +39,7 @@ class WeatherClock:
         if facecolor := AXES_SETTINGS.get("facecolor"):
             self.axes.set_facecolor(facecolor)
 
-    # TODO: change this to take in a Date object
-    def update(self, dt: datetime) -> None:
+    def update(self, dt: DateTime) -> None:
         # Get the current angles
         angles: dict[str, float] = self._get_angles(dt)
 
@@ -66,7 +66,7 @@ class WeatherClock:
         for hand, plot_ref in self._plot_refs.items():
             plot_ref.set_xdata([angles[hand], angles[hand]])
 
-    def _get_angles(self, dt: datetime) -> dict[str, float]:
+    def _get_angles(self, dt: DateTime) -> dict[str, float]:
         return {
             "hour": get_hour_angle(dt),
             "minute": get_minute_angle(dt),

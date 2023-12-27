@@ -1,8 +1,7 @@
 from matplotlib.axes import Axes
-from matplotlib.text import Text
 
 
-def initialize_text_subplot(self, ax: Axes) -> Axes:
+def initialize_text_subplot(ax: Axes) -> Axes:
     ax.axis("off")
     ax.set_xticks([])
     ax.set_yticks([])

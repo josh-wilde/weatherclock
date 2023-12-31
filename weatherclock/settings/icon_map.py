@@ -137,4 +137,5 @@ ICON_MAP = {
         "night": "wi-snow-wind",
     },
     "fog": {"description": "Fog/mist", "day": "wi-fog", "night": "wi-fog"},
+    "null": {"description": "No weather data", "day": "wi-na", "night": "wi-na"},
 }

@@ -21,6 +21,7 @@ class MplCanvas(FigureCanvas):
         # Set up figure and add axes
         fig: Figure = Figure(figsize=(width, height), dpi=dpi, **fig_kwargs)
         gs: GridSpec = GridSpec(2, 2, width_ratios=[1.5, 1], figure=fig)
+        # TODO: technically this type is not correct, might want to make an abstract AxesHolder class
         self.axes: dict[str, Axes] = {
             "weatherclock": WeatherClock(axes=fig.add_subplot(gs[:, 0], polar=True)),
             "date": Date(axes=fig.add_subplot(gs[0, 1])),

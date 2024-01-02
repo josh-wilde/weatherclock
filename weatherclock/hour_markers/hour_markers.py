@@ -1,7 +1,9 @@
 from weatherclock.settings.icon_map import ICON_MAP
 from PIL import Image, ImageDraw, ImageFont
 
-font = ImageFont.truetype("arial.ttf", 15)
+font_fpath: str = "/System/Library/Fonts/Supplemental/Arial.ttf"
+
+font = ImageFont.truetype(font_fpath, 14)
 unpadded: Image = Image.open("icons/png/wi-cloud-2.0.png")
 padded: Image = Image.new(
     unpadded.mode,
@@ -12,13 +14,14 @@ padded.paste(unpadded, (0, 0))
 
 draw: ImageDraw = ImageDraw.Draw(padded)
 draw.text(
-    (padded.size[0] // 2, unpadded.size[1] + unpadded.size[1] // 8),
-    "Hello",
+    (padded.size[0] // 2, unpadded.size[1]),  #  + unpadded.size[1] // 8
+    "64\u00b0 | 5%",
     fill="black",
-    anchor="mb",
+    anchor="ms",
     font=font,
 )
-padded.show()
+print(padded.size)
+# padded.show()
 
 
 class HourMarkers:

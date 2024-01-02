@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # TODO:  install Quicksand fonts to mac
 # Can use the viewer on PI to figure out the padding and spacing of text
-font_fpath: str = "/usr/share/fonts/truetype/quicksand/Quicksand-Regular.ttf" # "/System/Library/Fonts/Supplemental/Arial.ttf"
+font_fpath: str = "/usr/share/fonts/truetype/quicksand/Quicksand-Regular.ttf"  # "/Users/jwilde/Library/Fonts/Quicksand-Regular.ttf"
 
 font = ImageFont.truetype(font_fpath, 14)
 unpadded: Image = Image.open("icons/png/wi-cloud-2.0.png")
@@ -22,7 +22,7 @@ draw.text(
     anchor="ms",
     font=font,
 )
-#print(padded.size)
+# print(padded.size)
 padded.show()
 
 

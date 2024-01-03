@@ -49,6 +49,7 @@ class WeatherClock:
             icon_oi.image.axes = self.axes
             icon_ab: AnnotationBbox = AnnotationBbox(
                 icon_oi,
+                # TODO: this might also be the problem, get weird behavior when I change to 1.1 for y
                 (xticklabels[i].get_position()[0], 1.0),
                 frameon=False,
                 # box_alignment=(0.5, 1.2),

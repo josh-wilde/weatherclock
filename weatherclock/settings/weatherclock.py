@@ -1,9 +1,9 @@
 AXES_SETTINGS = {}
 
 YVALS = {
-    "second": [0, 0.95],
-    "minute": [0, 0.8],
-    "hour": [0, 0.5],
+    "second": [0, 0.55],
+    "minute": [0, 0.45],
+    "hour": [0, 0.35],
 }
 
 PLOT_SETTINGS = {

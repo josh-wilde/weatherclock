@@ -41,6 +41,9 @@ class WeatherClock:
         self.axes.set_yticklabels([])
 
         # TODO: move this all into a method
+        # I think the problem is that I am animated something outside of the axes
+        # this might help: https://matplotlib.org/stable/users/explain/animations/blitting.html
+        # also this: https://stackoverflow.com/questions/17558096/animated-title-in-matplotlib
         self.axes.set_xticklabels(["" for _ in range(12)])
         xticklabels: list[Text] = self.axes.xaxis.get_ticklabels()
         icons: list[Image.Image] = self.hour_markers.get_icons()
@@ -50,12 +53,10 @@ class WeatherClock:
             icon_ab: AnnotationBbox = AnnotationBbox(
                 icon_oi,
                 # TODO: this might also be the problem, get weird behavior when I change to 1.1 for y
-                (xticklabels[i].get_position()[0], 1.0),
+                (xticklabels[i].get_position()[0], 1),
                 frameon=False,
                 # box_alignment=(0.5, 1.2),
             )
-            # TODO: probably this is the issue.
-            # Maybe need to grab the returned artists and update them each time?
             self.axes.add_artist(icon_ab)
         self.axes.autoscale(False)
 

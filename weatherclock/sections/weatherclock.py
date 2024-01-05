@@ -7,6 +7,7 @@ from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from matplotlib.artist import Artist
 from PIL import Image
 
 from weatherclock.utils.clock import get_hour_angle, get_minute_angle, get_second_angle
@@ -20,6 +21,7 @@ class WeatherClock:
     def __init__(self, axes: Axes, dt: DateTime | None = None) -> None:
         self.axes: Axes = axes
         self.hour_markers: HourMarkers = HourMarkers()
+        self.icon_artists: list[Artist] = []
 
         # Initialize the clock axes
         self._initialize_axes()
@@ -39,9 +41,12 @@ class WeatherClock:
         self.axes.grid(False)
         self.axes.set_ylim(0, 1)
         self.axes.set_yticklabels([])
+        self.axes.axis("off")
 
         # TODO: move this all into a method
-        # I think the problem is that I am animated something outside of the axes
+        # There is a bug that makes the scaling weird if the icons trespass outside the axes
+        # Currently I am controlling this by using the y position of the AnnotationBbox
+        # Can't figure out how to fix it
         # this might help: https://matplotlib.org/stable/users/explain/animations/blitting.html
         # also this: https://stackoverflow.com/questions/17558096/animated-title-in-matplotlib
         self.axes.set_xticklabels(["" for _ in range(12)])
@@ -51,14 +56,11 @@ class WeatherClock:
             icon_oi: OffsetImage = OffsetImage(icon, zoom=1.0)
             icon_oi.image.axes = self.axes
             icon_ab: AnnotationBbox = AnnotationBbox(
-                icon_oi,
-                # TODO: this might also be the problem, get weird behavior when I change to 1.1 for y
-                (xticklabels[i].get_position()[0], 1),
+                offsetbox=icon_oi,
+                xy=(xticklabels[i].get_position()[0], 0.75),
                 frameon=False,
-                # box_alignment=(0.5, 1.2),
             )
-            self.axes.add_artist(icon_ab)
-        self.axes.autoscale(False)
+            self.icon_artists.append(self.axes.add_artist(icon_ab))
 
         # Stuff that can be set from AXES_SETTINGS
         if facecolor := AXES_SETTINGS.get("facecolor"):
@@ -91,6 +93,9 @@ class WeatherClock:
     def _update_plot_refs(self, angles: dict[str, float]) -> None:
         for hand, plot_ref in self._plot_refs.items():
             plot_ref.set_xdata([angles[hand], angles[hand]])
+
+        # for icon_artist in self.icon_artists:
+        #    self.axes.draw_artist(icon_artist)
 
     def _get_angles(self, dt: DateTime) -> dict[str, float]:
         return {

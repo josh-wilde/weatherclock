@@ -18,7 +18,7 @@ if __name__ == "__main__":
     args: list[str] = sys.argv[1:]
     scale: float = float(args[0])
     if len(args) == 0:
-        print("Usage: python -m scripts.save_icons.py scale [purge]")
+        print("Usage: python -m weatherclock.scripts.save_icons scale [purge]")
         sys.exit(1)
     purge_svgs: bool = True if len(args) == 2 and args[1] == "purge" else False
 

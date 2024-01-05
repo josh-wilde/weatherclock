@@ -18,7 +18,7 @@ class HourMarkers:
         self, hourly_forecast_abbreviations: list[tuple[str, str]] | None
     ) -> None:
         # Grab the icon and add padding space for the text
-        unpadded: Image.Image = Image.open("icons/png/wi-cloud-2.0.png")
+        unpadded: Image.Image = Image.open("icons/png/wi-day-sunny-1.75.png")
         padded: Image.Image = Image.new(
             unpadded.mode,
             (unpadded.size[0], unpadded.size[1] + unpadded.size[1] // 4),
@@ -28,10 +28,13 @@ class HourMarkers:
 
         # Add text
         font_fpath: str = "/Users/jwilde/Library/Fonts/Quicksand-Regular.ttf"
-        font: ImageFont.FreeTypeFont = ImageFont.truetype(font_fpath, 12)
+        font: ImageFont.FreeTypeFont = ImageFont.truetype(font_fpath, 10)
         draw: ImageDraw.ImageDraw = ImageDraw.Draw(padded)
         draw.text(
-            (padded.size[0] // 2, unpadded.size[1]),  #  + unpadded.size[1] // 8
+            (
+                padded.size[0] // 2,
+                unpadded.size[1] + unpadded.size[1] // 8,
+            ),
             "105\u00b0 | 100%",
             fill="black",
             anchor="ms",

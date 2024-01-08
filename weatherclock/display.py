@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 
+from weatherclock.settings.location import LAT_LONG
 from weatherclock.sections import WeatherClock, Date, ForecastDescription
 from weatherclock.date_time.date_time import DateTime
 from weatherclock.forecast.forecast import Forecast

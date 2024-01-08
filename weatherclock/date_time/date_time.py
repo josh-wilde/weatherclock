@@ -3,6 +3,8 @@ from weatherclock.constants import MONTH_NAMES, WEEKDAY_NAMES
 
 
 class DateTime:
+    # TODO: add a representation for the next twelve hours, maybe today() and tomorrow() methods
+    # Also allow a query for the Trulys date representation or something, maybe date format is a parameter if necessary
     def __init__(self, dt: datetime):
         self.update(dt)
 

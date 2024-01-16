@@ -11,7 +11,7 @@ class Forecast:
         self.longitude: float = longitude
         self.forecast_as_of_time: DateTime = date_time
         self._endpoints: dict[str, str] = {}
-        # The first level of this dict should indicate which endpoint the data came from (forecast, forecasut_hourly, forecast_grid_data)
+        # The first level of this dict should indicate which endpoint the data came from (forecast, forecast_hourly, forecast_grid_data)
         self._forecast_attributes: dict[str, Any] = {}
 
         self.update()

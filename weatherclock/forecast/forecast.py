@@ -11,8 +11,11 @@ class Forecast:
         self.longitude: float = longitude
         self.forecast_as_of_time: DateTime = date_time
         self._endpoints: dict[str, str] = {}
-        # The first level of this dict should indicate which endpoint the data came from (forecast, forecast_hourly, forecast_grid_data)
-        self._forecast_attributes: dict[str, Any] = {}
+        self._forecast_attributes: dict[str, Any] = {
+            "forecast": {},
+            "forecast_hourly": {},
+            "forecast_grid_data": {},
+        }
 
         self.update()
 
@@ -53,7 +56,22 @@ class Forecast:
         )
 
     def _update_forecast_endpoint_attributes(self) -> None:
-        pass
+        # Pull the short forecast [properties][periods][num][shortForecast], could also use detailedForecast
+        # Pull tomorrow's forecast after 6pm, today's forecast before 6pm
+        forecast_periods: list[dict[str, Any]] = self._endpoints["forecast"][
+            "properties"
+        ]["periods"]
+        first_period_name: str = forecast_periods[0]["name"]
+
+        if self.forecast_as_of_time.hour >= 18 and "night" in first_period_name.lower():
+            forecast_period = 1
+        else:
+            forecast_period = 0
+
+        self._forecast_attributes["forecast"]["short_forecast"] = (
+            f"{forecast_periods[forecast_period]['name']}: "
+            f"{forecast_periods[forecast_period]['shortForecast']}"
+        )
 
     def _update_forecast_hourly_endpoint_attributes(self) -> None:
         pass

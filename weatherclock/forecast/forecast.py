@@ -10,7 +10,7 @@ class Forecast:
         self.latitude: float = latitude
         self.longitude: float = longitude
         self.forecast_as_of_time: DateTime = date_time
-        self._endpoints: dict[str, str] = {}
+        self._endpoints: dict[str, str | None] = {}
         self._forecast_attributes: dict[str, Any] = {
             "forecast": {},
             "forecast_hourly": {},
@@ -47,20 +47,21 @@ class Forecast:
             raise ValueError("No properties found in points request")
 
         # Update endpoints
-        self._endpoints["forecast"]: dict = points_properties.get("forecast", {})
-        self._endpoints["forecast_hourly"]: dict = points_properties.get(
-            "forecastHourly", {}
+        self._endpoints["forecast"] = points_properties.get("forecast", None)
+        self._endpoints["forecast_hourly"] = points_properties.get(
+            "forecastHourly", None
         )
-        self._endpoints["forecast_grid_data"]: dict = points_properties.get(
-            "forecastGridData", {}
+        self._endpoints["forecast_grid_data"] = points_properties.get(
+            "forecastGridData", None
         )
 
     def _update_forecast_endpoint_attributes(self) -> None:
         # Pull the short forecast [properties][periods][num][shortForecast], could also use detailedForecast
         # Pull tomorrow's forecast after 6pm, today's forecast before 6pm
-        forecast_periods: list[dict[str, Any]] = self._endpoints["forecast"][
-            "properties"
-        ]["periods"]
+        forecast: dict = get_json(self._endpoints["forecast"])
+        forecast_periods: list[dict[str, Any]] = forecast.get("properties", {}).get(
+            "periods", {}
+        )
         first_period_name: str = forecast_periods[0]["name"]
 
         if self.forecast_as_of_time.hour >= 18 and "night" in first_period_name.lower():
@@ -74,7 +75,23 @@ class Forecast:
         )
 
     def _update_forecast_hourly_endpoint_attributes(self) -> None:
-        pass
+        # Temperature
+        # Prob of precip
+        # icon url
+        forecast_hourly: dict = get_json(self._endpoints["forecast_hourly"])
+        forecast_hourly_periods: list[dict[str, Any]] = forecast_hourly.get(
+            "properties", {}
+        ).get("periods", {})
+
+        for period in forecast_hourly_periods[:12]:
+            hour: int = ...  # parse startTime
+            self._forecast_attributes["forecast_hourly"][hour] = {
+                "temperature": period["temperature"],
+                "probability_of_precipitation": period["probabilityOfPrecipitation"][
+                    "value"
+                ],
+                "icon_url": period["icon"],
+            }
 
     def _update_forecast_grid_data_endpoint_attributes(self) -> None:
         pass

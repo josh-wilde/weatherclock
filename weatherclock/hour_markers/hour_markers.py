@@ -4,19 +4,19 @@ from PIL import Image, ImageDraw, ImageFont
 # TODO: probably when resetting all of the images, I should close the existing ones first.
 # Maybe optimize so that the ones that don't change aren't closed and reopened
 
+# TODO: need to fix the input types and parse the icon_url with the icon map
+
 
 class HourMarkers:
     def __init__(
-        self, hourly_forecast_abbreviations: list[tuple[str, str]] | None = None
+        self, hourly_forecast_abbreviations: dict[int, tuple[str, str]] | None = None
     ) -> None:
         # Look up the icons from the icon map
-        # Input: list of (short forecast, day/night) tuples
+        # Input: dict of hour_num: (short forecast, day/night) tuples
         self.icons: list[Image.Image] = []
         self.update(hourly_forecast_abbreviations)
 
-    def update(
-        self, hourly_forecast_abbreviations: list[tuple[str, str]] | None
-    ) -> None:
+    def update(self, hourly_forecast: list[tuple[str, str]] | None) -> None:
         # Grab the icon and add padding space for the text
         unpadded: Image.Image = Image.open("icons/png/wi-day-sunny-1.75.png")
         padded: Image.Image = Image.new(

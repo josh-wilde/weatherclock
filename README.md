@@ -5,6 +5,8 @@ Raspberry Pi WeatherClock
 # Environments
 
 - `env` environment from `requirements.txt` on pi and remote
+- Use [these instructions](https://robiokidenis.medium.com/how-to-install-multiple-python-on-your-mac-d20713740a2d) to install the correct local Python version from `brew`
+- TODO: need to figure out the right Python version from pi
 
 ## Displays
 
